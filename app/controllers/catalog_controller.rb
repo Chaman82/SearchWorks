@@ -1,4 +1,4 @@
- # -*- encoding : utf-8 -*-
+# -*- encoding : utf-8 -*-
 #
 class CatalogController < ApplicationController
 
@@ -351,11 +351,29 @@ class CatalogController < ApplicationController
     end
   end
 
+  def availability
+    _, documents = get_solr_response_for_document_ids(params[:id])
+    respond_to do |format|
+      format.json do
+        render json: render_document_with_availability_as_json(documents.first)
+      end
+      format.html { render 'public/500', layout: false, status: 400 }
+    end
+  end
+
   def stackmap
     render layout: !request.xhr?
   end
 
   private
+
+  def render_document_with_availability_as_json(document = nil)
+    return {} unless document.is_a?(SolrDocument)
+    {
+      title: document[blacklight_config.index.title_field],
+      holdings: document.holdings.as_json
+    }
+  end
 
   def validate_email_params
     unless ['full', 'brief'].include?(params[:type])
